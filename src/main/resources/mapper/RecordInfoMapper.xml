@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liuz.magicCamera.dao.RecordInfoDao">
+    <!-- Result Map-->
+    <resultMap id="BaseResultMap" type="com.liuz.magicCamera.entity.RecordInfo">
+    </resultMap>
+
+    <select id="getRecordList" resultMap="BaseResultMap" parameterType="java.util.Map">
+        SELECT
+        ri.id ,
+        ri.user_id as userId,
+        ri.file_id as fileId,
+        ri.record_type as recordType,
+        ri.record_date as recordDate,
+        ri.record_title as recordTitle,
+        ri.record_desc as recordDesc,
+        sr.file_name as fileName,
+        sr.web_url as webUrl
+        FROM
+        record_info ri
+        left join sys_rescource sr on ri.file_id=sr.id
+        WHERE
+        1=1
+        <if test="userId != null">
+            and user_id=#{userId}
+        </if>
+
+    </select>
+
+</mapper>

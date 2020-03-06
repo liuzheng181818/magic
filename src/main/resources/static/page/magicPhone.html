@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/element-ui@2.10.1/lib/theme-chalk/index.css">
+    <style>
+        .el-dialog {
+            width: 100%;
+        }
+
+        .el-dialog__headerbtn {
+            font-size: 32px;
+        }
+
+        .el-upload-list--picture-card .el-upload-list__item-actions {
+            width: 300px;
+            height: 300px;
+            font-size: 40px;
+        }
+
+        .el-upload--picture-card {
+            width: 300px;
+            height: 300px;
+            line-height: 300px;
+        }
+
+        .el-upload-list--picture-card .el-upload-list__item {
+            width: 300px;
+            height: 300px;
+        }
+
+        .el-table .warning-row {
+            background: oldlace;
+        }
+
+        .el-table .success-row {
+            background: #f0f9eb;
+        }
+
+
+        .el-header, .el-footer {
+            background-color: #F56C6C;
+            color: #333;
+            text-align: center;
+            line-height: 60px;
+        }
+
+        .el-main {
+            background-color: #E9EEF3;
+            color: #333;
+        }
+
+        .el-table .cell {
+            line-height: 33px;
+        }
+
+        /*.el-table {
+            font-size: 30px;
+        }*/
+
+
+    </style>
+</head>
+<body>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/element-ui@2.10.1/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<div id="app">
+    <el-container>
+        <el-header>Magic Camera</el-header>
+        <el-main>
+            <el-upload
+                    action="/magic-camera/record/addRecord"
+                    accept="image/*"
+                    list-type="picture-card"
+                    :file-list="fileList"
+                    :on-preview="handlePictureCardPreview"
+                    :on-remove="handleRemove"
+                    :on-success="handleUploadSuccess"
+            >
+                <i class="el-icon-plus"></i>
+            </el-upload>
+            <el-dialog :visible.sync="dialogVisible">
+                <img width="100%" :src="dialogImageUrl" alt="">
+            </el-dialog>
+
+            <template>
+                <el-table
+                        :data="tableData"
+                        style="width: 100%"
+                        :row-class-name="tableRowClassName">
+                    <el-table-column
+                            prop="recordDate"
+                            label="时间"
+                            width="200">
+                    </el-table-column>
+                    <el-table-column
+                            prop="recordTitle"
+                            label="记事"
+                            width="200">
+                    </el-table-column>
+                    <el-table-column
+                            prop="recordDesc"
+                            label="明细">
+                    </el-table-column>
+                </el-table>
+            </template>
+        </el-main>
+    </el-container>
+</div>
+<script>
+    var Main = {
+        data() {
+            return {
+                dialogImageUrl: '',
+                dialogVisible: false,
+                tableData: [],
+                fileList: []
+            };
+        },
+        methods: {
+            handleRemove(file, fileList) {
+                console.log(file);
+                let _this = this
+                let url = '/magic-camera/record/deleteRecord?recordId='+file.dataId
+                axios.post(url, {}).then(function (res) {
+                    console.log(JSON.stringify(res));
+                    if (res.data.success!=true) {
+                        _this.$message(res.data.message);
+                    }else{
+                        _this.loadTable();
+                    }
+                }).catch(function (error) {
+                })
+            },
+            handlePictureCardPreview(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+            tableRowClassName({row, rowIndex}) {
+                if (rowIndex === 1) {
+                    return 'warning-row';
+                } else if (rowIndex === 3) {
+                    return 'success-row';
+                }
+                return '';
+            },
+            handleUploadSuccess(response, file, fileList){
+                let _this = this
+                if(!response.success){
+                    _this.$message(response.message);
+                    return;
+                }
+                file.dataId=response.data.dataId;
+                _this.loadTable();
+            },
+            loadTableAndPicView(){
+                var data = []
+                var fileDate = []
+                let url = '/magic-camera/record/recordList'
+                let _this = this
+                axios.post(url, {}).then(function (res) {
+                    console.log(JSON.stringify(res));
+                    if (res.data != null) {
+                        for (let i = 0; i < res.data.data.length; i++) {
+                            var obj = {}
+                            obj.id = res.data.data[i].id
+                            obj.recordDate = res.data.data[i].recordDate
+                            obj.recordTitle = res.data.data[i].recordTitle
+                            obj.recordDesc = res.data.data[i].recordDesc
+                            data[i] = obj
+                            var fileobj = {}
+                            fileobj.dataId = res.data.data[i].id
+                            fileobj.name = res.data.data[i].fileName
+                            fileobj.url = "/magic-camera" + res.data.data[i].webUrl
+                            fileDate[i] = fileobj
+                        }
+                    }
+                    _this.fileList = fileDate
+                    _this.tableData = (data);
+                }).catch(function (error) {
+
+                })
+            },
+            loadTable(){
+                var data = []
+                let url = '/magic-camera/record/recordList'
+                let _this = this
+                axios.post(url, {}).then(function (res) {
+                    //console.log(JSON.stringify(res));
+                    if (res.data != null) {
+                        for (let i = 0; i < res.data.data.length; i++) {
+                            var obj = {}
+                            obj.id = res.data.data[i].id
+                            obj.recordDate = res.data.data[i].recordDate
+                            obj.recordTitle = res.data.data[i].recordTitle
+                            obj.recordDesc = res.data.data[i].recordDesc
+                            data[i] = obj
+                        }
+                    }
+                    _this.tableData = (data);
+                }).catch(function (error) {
+
+                })
+            }
+        },
+        created: function () {
+            let _this = this
+            _this.loadTableAndPicView();
+        }
+
+
+    }
+    var Ctor = Vue.extend(Main)
+    new Ctor().$mount('#app')
+
+</script>
+
+</body>
+</html>
